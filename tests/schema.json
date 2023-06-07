@@ -1,0 +1,43 @@
+{
+    "$schema": "http://json-schema.org/draft-06/schema#",
+    "type": "array",
+    "items": {
+        "$ref": "#/definitions/CompaniesData"
+    },
+    "definitions": {
+        "CompaniesData": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "Name": {
+                    "type": "string"
+                },
+                "Description": {
+                    "type": "string"
+                },
+                "Headquarters": {
+                    "type": "string"
+                },
+                "Status": {
+                    "type": "string",
+                    "enum" : ["Active", "Inactive"]
+                },
+                "Years active": {
+                    "type": "integer",
+                    "minimum": 0
+                },
+                "Financial health": {
+                    "type": "string",
+                    "enum" : ["Very poor", "Poor", "OK", "Good", "Very good"]
+                }
+            },
+            "required": [
+                "Financial health",
+                "Name",
+                "Status",
+                "Years active"
+            ],
+            "title": "CompaniesData"
+        }
+    }
+}

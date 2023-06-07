@@ -1,0 +1,33 @@
+{
+  "$schema": "http://json-schema.org/draft-06/schema#",
+  "$id": "http://example.com/companies-schema.json",
+  "type": "array",
+  "items": {
+    "$ref": "#/definitions/CompaniesData"
+  },
+  "definitions": {
+    "CompaniesData": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "Name": {
+          "type": "string"
+        },
+        "Description": {
+          "type": "string"
+        },
+        "Headquarters": {
+          "type": "string"
+        },
+        "Status": {
+          "type": "string",
+        },
+        "Health": {
+          "type": "string",
+        }
+      },
+      "required": ["Name"],
+      "title": "CompaniesData"
+    }
+  }
+}
