@@ -1,6 +1,6 @@
 # adapt-schema-tableq
 
-![Schema Table Question](https://example.com/images/schema-tableq.png)
+![Schema Table Question](tests/example-schema-tableq.png)
 
 **Schema Table Question** is a question component developed by the Open Data Institute for the [Adapt framework](https://github.com/adaptlearning/adapt_framework) and [Adapt authoring tool](https://github.com/adaptlearning/adapt_authoring). This component allows learners to create data that conforms to a specified schema or description. The learner uses a table interface to enter data, which is then validated against the schema.
 
