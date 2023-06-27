@@ -19,6 +19,7 @@ The **Schema Table Question** component utilizes attributes defined in the `prop
 - **ariaQuestion** (string): A text read by screen readers instead of the display title, body, and instruction fields when focusing on the table options. Should be clear and concise, focusing only on the associated question.
 - **schema** (file): The JSON schema against which the user's answer is validated. This attribute accepts an asset in the form of an uploaded file.
 - **rows** (number): Specifies the number of rows (excluding headers) in the table. Learners can expand the table if needed. Default: 2.
+- **requiredRows** (number): Specifies the number of rows that are required to have data before the user can submit their answer. Default: 2.
 - **maxRows** (number): Sets the maximum number of rows (excluding headers) allowed in the table. Default: 4.
 - **columns** (number): Defines the number of columns in the table. Learners can expand the table if needed. Default: 2.
 - **placeholderText** (string): Specifies a placeholder text for empty cells in the table. Default: ""

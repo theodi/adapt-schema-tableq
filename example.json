@@ -15,6 +15,7 @@
   "_isRandom": false,
   "schema": "/path/to/schema.json",
   "rows": 2,
+  "requiredRows": 2,
   "maxRows": 4,
   "columns": 2,
   "maxColumns": 4,
