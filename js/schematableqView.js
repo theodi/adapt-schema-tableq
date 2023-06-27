@@ -9,14 +9,14 @@ class SchemaTableqView extends QuestionView {
   }
 
   preRender() {
-    //Get file containing sample to populate table
-    var sampleFile = this.model.get('sample');
-    //If we have a sample file and there is no userData to load
+    // Get file containing sample to populate table
+    const sampleFile = this.model.get('sample');
+    // If we have a sample file and there is no userData to load
     if (sampleFile && (!this.model.get('tableData'))) {
       fetch(sampleFile)
         .then(response => response.text())
         .then(csvData => {
-          this.model.set('tableData',this.parseCSVData(csvData));
+          this.model.set('tableData', this.parseCSVData(csvData));
           this.renderTable();
         })
         .catch(error => {
@@ -24,11 +24,11 @@ class SchemaTableqView extends QuestionView {
         });
     } else {
       if (!this.model.get('tableData')) {
-        this.model.set('tableData',{});
+        this.model.set('tableData', {});
       }
       this.renderTable();
     }
-    var modelAnswerFile = this.model.get('modelAnswer');
+    const modelAnswerFile = this.model.get('modelAnswer');
     if (modelAnswerFile) {
       fetch(modelAnswerFile)
         .then(response => response.text())
@@ -40,28 +40,41 @@ class SchemaTableqView extends QuestionView {
           console.error('Error loading data:', error);
         });
     } else {
-      this.model.set('_canShowModelAnswer',false)
+      this.model.set('_canShowModelAnswer', false);
+    }
+  }
+
+  disableButtons() {
+    const table = this.model.get('table');
+    const parent = table.parentNode;
+    const buttons = parent.querySelectorAll('button');
+    for (let i = 0; i < buttons.length; i++) {
+      buttons[i].classList.add('is-disabled');
     }
   }
 
   renderTable() {
-    var data = this.model.get('tableData');
-    var tableId = `${this.model.get('_id')}-table`;
-    var table = this.$(`#${tableId}`)[0];
-    this.model.set('table',table);
+    const data = this.model.get('tableData');
+    const tableId = `${this.model.get('_id')}-table`;
+    const table = this.$(`#${tableId}`)[0];
+    this.model.set('table', table);
 
-    var placeholderText = this.model.get('placeholderText');
+    if (this.model.get('_isSubmitted')) {
+      this.disableButtons();
+    }
 
-    var thead = document.createElement('thead');
-    var tbody = document.createElement('tbody');
+    const placeholderText = this.model.get('placeholderText');
+
+    const thead = document.createElement('thead');
+    const tbody = document.createElement('tbody');
 
     // Create table headers
-    var headers = Object.keys(data[0] || {});
-    var headerRow = document.createElement('tr');
-    var columns = Math.max(headers.length, this.model.get('columns') || 0);
+    const headers = Object.keys(data[0] || {});
+    const headerRow = document.createElement('tr');
+    const columns = Math.max(headers.length, this.model.get('columns') || 0);
 
-    for (var i = 0; i < columns; i++) {
-      var th = document.createElement('th');
+    for (let i = 0; i < columns; i++) {
+      const th = document.createElement('th');
       th.textContent = headers[i] || placeholderText;
       th.setAttribute('contenteditable', 'true'); // Set contenteditable attribute
       if (!headers[i]) {
@@ -89,18 +102,18 @@ class SchemaTableqView extends QuestionView {
     table.appendChild(thead);
 
     // Create table rows
-    var numRows = Math.max(this.model.get('rows') || 0, data.length);
+    const numRows = Math.max(this.model.get('rows') || 0, data.length);
     for (let i = 0; i < numRows; i++) {
-      var tr = document.createElement('tr');
+      const tr = document.createElement('tr');
 
-      for (var j = 0; j < columns; j++) {
-        var td = document.createElement('td');
+      for (let j = 0; j < columns; j++) {
+        const td = document.createElement('td');
         td.textContent = data[i] ? data[i][headers[j]] || placeholderText : placeholderText;
-        
+
         if (td.textContent === placeholderText) {
           td.classList.add('placeholder');
         }
-        
+
         td.setAttribute('contenteditable', 'true'); // Set contenteditable attribute
         td.addEventListener('focus', function () {
           this.classList.remove('placeholder');
@@ -110,7 +123,11 @@ class SchemaTableqView extends QuestionView {
         });
 
         // Add event listener to restore placeholder class and text if the cell loses focus and has no content
+        const self = this;
         td.addEventListener('blur', function () {
+          if (self.minimumRowsReached()) {
+            self.model.set('_canSubmit', true);
+          }
           if (this.textContent.trim() === '') {
             this.classList.add('placeholder');
             this.textContent = placeholderText;
@@ -127,23 +144,68 @@ class SchemaTableqView extends QuestionView {
 
   }
 
-  renderModelAnswerTable() {
-    var tableId = `${this.model.get('_id')}-table`;
-    var table = this.$(`#${tableId}`)[0];
-    var parent = table.parentNode;
+  minimumRowsReached() {
+    const table = this.model.get('table');
+    const placeholderText = this.model.get('placeholderText');
+    const data = [];
+    const rows = table.rows;
+    if (rows.length < this.model.get('requiredRows')) {
+      return false;
+    }
+    for (let i = 1; i < rows.length; i++) {
+      const rowData = {};
+      const cells = rows[i].cells;
+      let hasValues = false; // Flag to track if the row has any non-empty cells
 
-    var newTable = document.createElement('table');
-    newTable.setAttribute('class','modelAnswer');
-    newTable.setAttribute('id',this.model.get('_id') + '-modelAnswer');
-    var thead = document.createElement('thead');
-    var tbody = document.createElement('tbody');
+      // Iterate over cells
+      for (let j = 0; j < cells.length; j++) {
+        const cell = cells[j];
+        const value = cell.innerHTML.trim();
+
+        // Skip cells with placeholder text
+        if (value !== placeholderText) {
+          const columnName = table.rows[0].cells[j].innerHTML.trim();
+
+          // Check for different data types
+          if (value === 'true' || value === 'false') {
+            rowData[columnName] = value === 'true';
+          } else if (/^-?\d+(\.\d+)?$/.test(value)) {
+            rowData[columnName] = parseFloat(value);
+          } else {
+            rowData[columnName] = value;
+          }
+
+          hasValues = true; // Set flag to true if a non-empty cell is found
+        }
+      }
+
+      // Add row data to the array if it has at least one non-empty cell
+      if (hasValues) {
+        data.push(rowData);
+      }
+    }
+    if (data.length < this.model.get('requiredRows')) {
+      return false;
+    }
+    return true;
+  }
+
+  renderModelAnswerTable() {
+    const tableId = `${this.model.get('_id')}-table`;
+    const table = this.$(`#${tableId}`)[0];
+
+    const newTable = document.createElement('table');
+    newTable.setAttribute('class', 'modelAnswer');
+    newTable.setAttribute('id', this.model.get('_id') + '-modelAnswer');
+    const thead = document.createElement('thead');
+    const tbody = document.createElement('tbody');
 
     // Create table headers
-    var headers = Object.keys(this.modelAnswerData[0]);
-    var headerRow = document.createElement('tr');
+    const headers = Object.keys(this.modelAnswerData[0]);
+    const headerRow = document.createElement('tr');
 
     headers.forEach((header) => {
-      var th = document.createElement('th');
+      const th = document.createElement('th');
       th.textContent = header;
       headerRow.appendChild(th);
     });
@@ -152,12 +214,12 @@ class SchemaTableqView extends QuestionView {
     newTable.appendChild(thead);
 
     // Create table rows
-    var numRows = this.modelAnswerData.length;
+    const numRows = this.modelAnswerData.length;
     for (let i = 0; i < numRows; i++) {
-      var tr = document.createElement('tr');
+      const tr = document.createElement('tr');
 
       headers.forEach((header) => {
-        var td = document.createElement('td');
+        const td = document.createElement('td');
         td.textContent = this.modelAnswerData[i]?.[header];
         tr.appendChild(td);
       });
@@ -165,14 +227,14 @@ class SchemaTableqView extends QuestionView {
       tbody.appendChild(tr);
     }
     newTable.appendChild(tbody);
-    
+
     table.insertAdjacentElement('afterend', newTable);
 
   }
 
   onAddRow(event) {
-    var placeholderText = this.model.get('placeholderText');
-    var button = event.target; // Get the button element that triggered the event
+    const placeholderText = this.model.get('placeholderText');
+    const button = event.target; // Get the button element that triggered the event
 
     // Check if the button has the 'is-disabled' class
     if (button.classList.contains('is-disabled')) {
@@ -180,21 +242,20 @@ class SchemaTableqView extends QuestionView {
       return;
     }
 
-    var tableId = `${this.model.get('_id')}-table`;
-    var table = this.$(`#${tableId}`)[0];
+    const tableId = `${this.model.get('_id')}-table`;
+    const table = this.$(`#${tableId}`)[0];
 
-  
     const maxRows = this.model.get('maxRows'); // Get the maxRows value from your model (if defined)
 
     // Check if the maxRows value is defined and the number of rows exceeds it
-    if (maxRows !== undefined && table.rows.length-1 >= maxRows) {
-      alert('You have reached the maximum number of permitted rows.')
+    if (maxRows !== undefined && table.rows.length - 1 >= maxRows) {
+      alert('You have reached the maximum number of permitted rows.');
       return; // Return early if the maximum number of rows is reached
     }
-    var newRow = table.insertRow();
-    var numColumns = table.rows[0].cells.length;
+    const newRow = table.insertRow();
+    const numColumns = table.rows[0].cells.length;
     for (let i = 0; i < numColumns; i++) {
-      var newCell = newRow.insertCell();
+      const newCell = newRow.insertCell();
       newCell.classList.add('placeholder');
       newCell.contentEditable = true; // Enable editing for the cell
       newCell.innerHTML = placeholderText; // Set the initial value to placeholder text
@@ -218,8 +279,8 @@ class SchemaTableqView extends QuestionView {
   }
 
   onAddColumn(event) {
-    var placeholderText = this.model.get('placeholderText');
-    var button = event.target; // Get the button element that triggered the event
+    const placeholderText = this.model.get('placeholderText');
+    const button = event.target; // Get the button element that triggered the event
 
     // Check if the button has the 'is-disabled' class
     if (button.classList.contains('is-disabled')) {
@@ -227,9 +288,8 @@ class SchemaTableqView extends QuestionView {
       return;
     }
 
-    var tableId = `${this.model.get('_id')}-table`;
-    var table = this.$(`#${tableId}`)[0];
-
+    const tableId = `${this.model.get('_id')}-table`;
+    const table = this.$(`#${tableId}`)[0];
 
     const maxColumns = this.model.get('maxColumns'); // Get the maximum number of columns from the model
 
@@ -300,7 +360,7 @@ class SchemaTableqView extends QuestionView {
 
   onQuestionRendered() {
     this.setReadyStatus();
-    //this.model.set('_canSubmit',true);
+    // this.model.set('_canSubmit',true);
   }
 
   // Used by the question view to reset the look and feel of the component.
@@ -309,39 +369,39 @@ class SchemaTableqView extends QuestionView {
   }
 
   showCorrectAnswer() {
-    var tableId = `${this.model.get('_id')}-table`;
-    var table = this.$(`#${tableId}`)[0];
-    var parent = table.parentNode;
-    var modelAnswerTable = parent.getElementsByClassName('modelAnswer')[0];
+    const tableId = `${this.model.get('_id')}-table`;
+    const table = this.$(`#${tableId}`)[0];
+    const parent = table.parentNode;
+    const modelAnswerTable = parent.getElementsByClassName('modelAnswer')[0];
 
     if (modelAnswerTable) {
-      table.style.display = 'none';    
-      modelAnswerTable.style.display = 'inline-table';  
+      table.style.display = 'none';
+      modelAnswerTable.style.display = 'inline-table';
     }
   }
 
   hideCorrectAnswer() {
-    var tableId = `${this.model.get('_id')}-table`;
-    var table = this.$(`#${tableId}`)[0];
-    var parent = table.parentNode;
-    var modelAnswerTable = parent.getElementsByClassName('modelAnswer')[0];
+    const tableId = `${this.model.get('_id')}-table`;
+    const table = this.$(`#${tableId}`)[0];
+    const parent = table.parentNode;
+    const modelAnswerTable = parent.getElementsByClassName('modelAnswer')[0];
 
     if (modelAnswerTable) {
       table.style.display = 'inline-table';
-      modelAnswerTable.style.display = 'none';  
+      modelAnswerTable.style.display = 'none';
     }
   }
 
   parseCSVData(csvData) {
     // Parse the CSV data into an array of objects
-    var lines = csvData.trim().split('\n');
-    var headers = lines[0].split(',');
-    var result = [];
-  
-    for (var i = 1; i < lines.length; i++) {
-      var line = lines[i].split(',');
-      var item = {};
-      for (var j = 0; j < headers.length; j++) {
+    const lines = csvData.trim().split('\n');
+    const headers = lines[0].split(',');
+    const result = [];
+
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i].split(',');
+      const item = {};
+      for (let j = 0; j < headers.length; j++) {
         item[headers[j].trim()] = line[j].trim();
       }
 

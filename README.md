@@ -38,7 +38,7 @@ The **Schema Table Question** component supports accessibility features, includi
 
 ## Limitations
 
-When used with a LMS via SCORM only the result (correct/incorrect) is stored. The user data entered in the table is sent the a SCORM LMS as part of the interactions object, however currenlty it is not restored upon revisit. Due to the many ridiculous limitations of SCORM, it really wasn't built to handle customer user input. 
+When used with a LMS via SCORM only the result (correct/incorrect) is stored. The user data entered in the table is sent the a SCORM LMS as part of the interactions object. User answer is stored/restored from a cookie, however this is limited.
 
 XAPI works as expected and user input is restored on revisit. 
 

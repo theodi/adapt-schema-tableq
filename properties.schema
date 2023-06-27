@@ -24,7 +24,7 @@
     "instruction": {
       "type": "string",
       "required": false,
-      "default": "Complete your data then press submit.",
+      "default": "Complete your data then press submit. Note that a minimum of 2 rows of data are required.",
       "inputType": "Text",
       "validators": [],
       "help": "This is the instruction text",
@@ -45,7 +45,7 @@
         "default" : "",
         "title" : "Schema",
         "inputType" : "Asset:other",
-        "validators" : [ 
+        "validators" : [
             "required"
         ],
         "help" : "The JSON schema against which the user answer is validated"
@@ -67,6 +67,15 @@
       "inputType": "Number",
       "validators": ["required", "number"],
       "help": "The maximum number of rows (excluding headers)"
+    },
+    "requiredRows": {
+      "type": "number",
+      "required": true,
+      "default": 2,
+      "title": "Required rows",
+      "inputType": "Number",
+      "validators": ["required", "number"],
+      "help": "The required number of rows, cannot be blank"
     },
     "columns": {
       "type": "number",
